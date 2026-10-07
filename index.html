@@ -1,0 +1,1439 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Binary Search Tree (BST) Laboratory</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#eef2ff',
+                            100: '#e0e7ff',
+                            500: '#6366f1',
+                            600: '#4f46e5',
+                            700: '#4338ca',
+                            900: '#312e81',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Fira+Code:wght@400;500&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+        code, pre, .font-mono { font-family: 'Fira Code', monospace; }
+        
+        /* Custom scrollbars */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: rgba(0,0,0,0.05); }
+        ::-webkit-scrollbar-thumb { background: rgba(100,116,139,0.3); border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: rgba(100,116,139,0.5); }
+        
+        .canvas-bg {
+            background-size: 24px 24px;
+            background-image: 
+                radial-gradient(circle, rgba(99, 102, 241, 0.15) 1px, transparent 1px);
+        }
+        .dark .canvas-bg {
+            background-image: 
+                radial-gradient(circle, rgba(255, 255, 255, 0.1) 1px, transparent 1px);
+        }
+    </style>
+</head>
+<body class="bg-slate-900 text-slate-100 min-h-screen flex flex-col antialiased selection:bg-indigo-500 selection:text-white">
+
+    <!-- Navigation Header -->
+    <header class="bg-slate-800/80 backdrop-blur border-b border-slate-700/80 sticky top-0 z-50 px-4 lg:px-8 py-3 flex items-center justify-between shadow-lg">
+        <div class="flex items-center space-x-3">
+            <div class="bg-gradient-to-tr from-indigo-600 to-violet-500 p-2.5 rounded-xl shadow-md text-white">
+                <i class="fa-solid font-bold fa-diagram-project text-xl"></i>
+            </div>
+            <div>
+                <h1 class="text-lg font-bold tracking-tight text-white flex items-center gap-2">
+                    BST Interactive Virtual Lab
+                    <span class="text-xs font-semibold px-2 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">CS Ed</span>
+                </h1>
+                <p class="text-xs text-slate-400">Binary Search Tree Algorithms, Visualizations & Narration</p>
+            </div>
+        </div>
+
+        <!-- Mode Navigation Tabs -->
+        <div class="hidden md:flex items-center bg-slate-900/80 p-1 rounded-xl border border-slate-700/60">
+            <button id="tab-lab" onclick="switchTab('lab')" class="tab-btn px-4 py-1.5 rounded-lg text-xs font-medium transition-all text-white bg-indigo-600 shadow">
+                <i class="fa-solid fa-flask mr-1.5"></i>Interactive Lab
+            </button>
+            <button id="tab-lesson" onclick="switchTab('lesson')" class="tab-btn px-4 py-1.5 rounded-lg text-xs font-medium text-slate-400 hover:text-slate-200 transition-all">
+                <i class="fa-solid fa-graduation-cap mr-1.5"></i>Animated Lesson
+            </button>
+            <button id="tab-complexity" onclick="switchTab('complexity')" class="tab-btn px-4 py-1.5 rounded-lg text-xs font-medium text-slate-400 hover:text-slate-200 transition-all">
+                <i class="fa-solid fa-chart-line mr-1.5"></i>Complexity & Balance
+            </button>
+            <button id="tab-quiz" onclick="switchTab('quiz')" class="tab-btn px-4 py-1.5 rounded-lg text-xs font-medium text-slate-400 hover:text-slate-200 transition-all">
+                <i class="fa-solid fa-list-check mr-1.5"></i>Practice Quiz
+            </button>
+        </div>
+
+        <!-- System Controls -->
+        <div class="flex items-center space-x-3">
+            <!-- Global Audio Speech Control -->
+            <button id="audio-toggle-btn" onclick="toggleAudioMute()" class="p-2 rounded-lg bg-slate-700/60 hover:bg-slate-700 text-slate-300 hover:text-white transition border border-slate-600/50" title="Toggle Audio Narration">
+                <i id="audio-icon" class="fa-solid fa-volume-high text-indigo-400"></i>
+            </button>
+
+            <!-- Reset Default Tree Button -->
+            <button onclick="loadDefaultTree()" class="px-3 py-1.5 text-xs font-medium rounded-lg bg-slate-700/60 hover:bg-slate-700 text-slate-200 hover:text-white transition border border-slate-600/50 flex items-center gap-1.5">
+                <i class="fa-solid fa-rotate-left"></i> Reset Preset
+            </button>
+
+            <button onclick="toggleTeacherMode()" id="teacher-mode-btn" class="px-3 py-1.5 text-xs font-semibold rounded-lg bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-300 border border-emerald-500/30 transition flex items-center gap-1.5">
+                <i class="fa-solid fa-chalkboard-user"></i> Teacher Mode
+            </button>
+        </div>
+    </header>
+
+    <!-- Mobile Navigation Tabs Bar -->
+    <div class="md:hidden flex bg-slate-900 p-2 border-b border-slate-800 justify-around text-xs">
+        <button onclick="switchTab('lab')" class="text-indigo-400 font-semibold">Lab</button>
+        <button onclick="switchTab('lesson')" class="text-slate-400">Lesson</button>
+        <button onclick="switchTab('complexity')" class="text-slate-400">Complexity</button>
+        <button onclick="switchTab('quiz')" class="text-slate-400">Quiz</button>
+    </div>
+
+    <!-- MAIN CONTAINER -->
+    <main class="flex-1 flex flex-col lg:flex-row overflow-hidden relative">
+
+        <!-- VIEW 1: LAB WORKSPACE -->
+        <div id="view-lab" class="view-panel flex-1 flex flex-col lg:flex-row w-full h-full">
+
+            <!-- LEFT CONTROL SIDEBAR -->
+            <aside class="w-full lg:w-80 bg-slate-800/50 border-r border-slate-700/60 flex flex-col overflow-y-auto p-4 space-y-5">
+
+                <!-- Operations Card -->
+                <div class="bg-slate-800 rounded-xl p-4 border border-slate-700/80 shadow-sm space-y-4">
+                    <h2 class="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center justify-between">
+                        <span>BST Operations</span>
+                        <i class="fa-solid fa-sliders text-indigo-400"></i>
+                    </h2>
+
+                    <!-- Insert -->
+                    <div class="space-y-1.5">
+                        <label class="text-xs font-medium text-slate-300">Insert Key</label>
+                        <div class="flex gap-2">
+                            <input type="number" id="insert-val" placeholder="e.g. 65" min="1" max="999" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-1.5 text-sm text-white focus:outline-none focus:border-indigo-500 transition">
+                            <button onclick="handleInsert()" class="px-4 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold rounded-lg transition shadow flex items-center gap-1">
+                                <i class="fa-solid fa-plus text-xs"></i> Insert
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Search -->
+                    <div class="space-y-1.5">
+                        <label class="text-xs font-medium text-slate-300">Search Key</label>
+                        <div class="flex gap-2">
+                            <input type="number" id="search-val" placeholder="e.g. 60" min="1" max="999" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-1.5 text-sm text-white focus:outline-none focus:border-indigo-500 transition">
+                            <button onclick="handleSearch()" class="px-4 py-1.5 bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-semibold rounded-lg transition shadow flex items-center gap-1">
+                                <i class="fa-solid fa-magnifying-glass text-xs"></i> Search
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Delete -->
+                    <div class="space-y-1.5">
+                        <label class="text-xs font-medium text-slate-300">Delete Key</label>
+                        <div class="flex gap-2">
+                            <input type="number" id="delete-val" placeholder="e.g. 50" min="1" max="999" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-1.5 text-sm text-white focus:outline-none focus:border-indigo-500 transition">
+                            <button onclick="handleDelete()" class="px-4 py-1.5 bg-rose-600 hover:bg-rose-500 text-white text-xs font-semibold rounded-lg transition shadow flex items-center gap-1">
+                                <i class="fa-solid fa-trash text-xs"></i> Delete
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tree Generator Panel -->
+                <div class="bg-slate-800 rounded-xl p-4 border border-slate-700/80 shadow-sm space-y-3">
+                    <h2 class="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center justify-between">
+                        <span>Random Generator</span>
+                        <i class="fa-solid fa-dice text-indigo-400"></i>
+                    </h2>
+                    <div class="space-y-2">
+                        <div class="flex justify-between items-center text-xs">
+                            <span class="text-slate-300">Node Count</span>
+                            <span id="node-count-disp" class="font-bold text-indigo-400">7</span>
+                        </div>
+                        <input type="range" id="random-node-count" min="3" max="15" value="7" oninput="document.getElementById('node-count-disp').innerText = this.value" class="w-full accent-indigo-500 bg-slate-900 rounded-lg h-2">
+                        
+                        <button onclick="generateRandomTree()" class="w-full py-2 bg-slate-700 hover:bg-slate-600 text-slate-100 text-xs font-semibold rounded-lg border border-slate-600 transition flex items-center justify-center gap-2">
+                            <i class="fa-solid fa-arrows-rotate"></i> Generate Random BST
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Traversals Trigger Section -->
+                <div class="bg-slate-800 rounded-xl p-4 border border-slate-700/80 shadow-sm space-y-3">
+                    <h2 class="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center justify-between">
+                        <span>Tree Traversals</span>
+                        <i class="fa-solid fa-route text-indigo-400"></i>
+                    </h2>
+                    <div class="grid grid-cols-2 gap-2">
+                        <button onclick="startTraversal('inorder')" class="p-2 bg-slate-900 hover:bg-indigo-950 hover:border-indigo-500/50 border border-slate-700 rounded-lg text-xs font-medium text-slate-200 transition text-left flex items-center gap-2">
+                            <i class="fa-solid fa-arrow-right-short-wide text-indigo-400"></i> Inorder
+                        </button>
+                        <button onclick="startTraversal('preorder')" class="p-2 bg-slate-900 hover:bg-indigo-950 hover:border-indigo-500/50 border border-slate-700 rounded-lg text-xs font-medium text-slate-200 transition text-left flex items-center gap-2">
+                            <i class="fa-solid fa-arrow-down-wide-short text-emerald-400"></i> Preorder
+                        </button>
+                        <button onclick="startTraversal('postorder')" class="p-2 bg-slate-900 hover:bg-indigo-950 hover:border-indigo-500/50 border border-slate-700 rounded-lg text-xs font-medium text-slate-200 transition text-left flex items-center gap-2">
+                            <i class="fa-solid fa-arrow-up-wide-short text-amber-400"></i> Postorder
+                        </button>
+                        <button onclick="startTraversal('levelorder')" class="p-2 bg-slate-900 hover:bg-indigo-950 hover:border-indigo-500/50 border border-slate-700 rounded-lg text-xs font-medium text-slate-200 transition text-left flex items-center gap-2">
+                            <i class="fa-solid fa-bars-staggered text-cyan-400"></i> Level-Order
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Step Controller & Playback Bar -->
+                <div class="bg-slate-800 rounded-xl p-4 border border-slate-700/80 shadow-sm space-y-3 mt-auto">
+                    <h2 class="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center justify-between">
+                        <span>Playback & Speed</span>
+                        <i class="fa-solid fa-gauge-high text-indigo-400"></i>
+                    </h2>
+
+                    <div class="flex items-center justify-center gap-2 bg-slate-900 p-2 rounded-xl border border-slate-700">
+                        <button onclick="stepPrev()" class="p-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white transition" title="Previous Step">
+                            <i class="fa-solid fa-backward-step"></i>
+                        </button>
+                        <button id="play-pause-btn" onclick="togglePlayPause()" class="px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-semibold transition" title="Play / Pause">
+                            <i id="play-pause-icon" class="fa-solid fa-play"></i>
+                        </button>
+                        <button onclick="stepNext()" class="p-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white transition" title="Next Step">
+                            <i class="fa-solid fa-forward-step"></i>
+                        </button>
+                    </div>
+
+                    <div class="space-y-1">
+                        <div class="flex justify-between items-center text-xs">
+                            <span class="text-slate-400">Animation Speed</span>
+                            <span id="speed-disp" class="text-indigo-400 font-mono">1.0x</span>
+                        </div>
+                        <input type="range" id="speed-slider" min="0.3" max="2.5" step="0.1" value="1.0" oninput="updateSpeed(this.value)" class="w-full accent-indigo-500 bg-slate-900 rounded-lg h-1.5">
+                    </div>
+                </div>
+            </aside>
+
+            <!-- CENTER CANVAS AREA -->
+            <section class="flex-1 flex flex-col relative bg-slate-950 overflow-hidden">
+                <!-- Status & Operational Context Overlay -->
+                <div class="absolute top-4 left-4 z-10 bg-slate-800/90 backdrop-blur border border-slate-700/80 rounded-xl px-4 py-2.5 shadow-xl max-w-md">
+                    <div class="flex items-center gap-2 mb-1">
+                        <span id="status-badge" class="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-slate-700 text-slate-300">Ready</span>
+                        <span id="operation-title" class="text-xs font-semibold text-slate-200">Select an operation</span>
+                    </div>
+                    <p id="operation-detail" class="text-xs text-slate-400 leading-relaxed">
+                        Insert values, search keys, or trigger traversals to visualize BST properties.
+                    </p>
+                </div>
+
+                <!-- Canvas Visualizer -->
+                <div class="flex-1 relative canvas-bg flex items-center justify-center">
+                    <canvas id="bst-canvas" class="w-full h-full block"></canvas>
+
+                    <!-- Accessibility / Color Legend Overlay -->
+                    <div class="absolute bottom-4 right-4 bg-slate-800/80 backdrop-blur border border-slate-700/60 rounded-xl p-3 shadow-lg text-[11px] space-y-1.5 hidden sm:block">
+                        <div class="font-bold text-slate-300 mb-1 border-b border-slate-700 pb-1">Legend</div>
+                        <div class="flex items-center gap-2">
+                            <span class="w-3 h-3 rounded-full bg-indigo-600 border border-indigo-400 inline-block"></span>
+                            <span class="text-slate-300">Normal Node</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span class="w-3 h-3 rounded-full bg-amber-500 border border-amber-300 inline-block"></span>
+                            <span class="text-slate-300">Current Comparison</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span class="w-3 h-3 rounded-full bg-emerald-500 border border-emerald-300 inline-block"></span>
+                            <span class="text-slate-300">Found / Inserted</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span class="w-3 h-3 rounded-full bg-rose-500 border border-rose-300 inline-block"></span>
+                            <span class="text-slate-300">Target Deleted / Successor</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- BOTTOM DYNAMIC TRAVERSAL & LOG CONSOLE -->
+                <footer class="bg-slate-900 border-t border-slate-800 p-4 space-y-3 z-10">
+                    <!-- Dynamic Traversal Output Bar -->
+                    <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 bg-slate-950 p-3 rounded-xl border border-slate-800">
+                        <div class="flex items-center gap-2 text-xs font-semibold text-slate-300">
+                            <i class="fa-solid fa-list-ol text-indigo-400"></i>
+                            <span>Traversal Sequence:</span>
+                        </div>
+                        <div id="traversal-output" class="flex flex-wrap items-center gap-2 font-mono text-xs text-indigo-300 min-h-[28px]">
+                            <span class="text-slate-500 italic">No traversal currently active</span>
+                        </div>
+                    </div>
+
+                    <!-- Step-by-Step Log Stream & Teacher Explanation -->
+                    <div class="bg-slate-800/80 rounded-xl p-3 border border-slate-700/80 flex items-start gap-3">
+                        <div class="p-2 rounded-lg bg-indigo-500/20 text-indigo-400 mt-0.5">
+                            <i class="fa-solid fa-chalkboard text-sm"></i>
+                        </div>
+                        <div class="flex-1 space-y-1">
+                            <div class="flex items-center justify-between">
+                                <h3 class="text-xs font-bold text-slate-200">Algorithmic Step Explanation</h3>
+                                <span id="step-counter" class="text-[10px] font-mono text-slate-400">Step 0 / 0</span>
+                            </div>
+                            <p id="step-log-text" class="text-xs text-slate-300 leading-relaxed">
+                                Ready to begin. Choose an algorithm step to see real-time node comparisons and tree restructuring.
+                            </p>
+                        </div>
+                    </div>
+                </footer>
+            </section>
+
+        </div>
+
+        <!-- VIEW 2: ANIMATED LESSON MODAL / TAB -->
+        <div id="view-lesson" class="view-panel hidden flex-1 p-6 overflow-y-auto bg-slate-900">
+            <div class="max-w-4xl mx-auto space-y-8">
+                
+                <div class="border-b border-slate-800 pb-4">
+                    <h2 class="text-2xl font-bold text-white flex items-center gap-2">
+                        <i class="fa-solid fa-circle-play text-indigo-500"></i>
+                        Interactive BST Classroom Video Tutorial
+                    </h2>
+                    <p class="text-sm text-slate-400 mt-1">
+                        Step-by-step interactive slides and guided audio lectures explaining Binary Search Tree theory.
+                    </p>
+                </div>
+
+                <!-- Video Slide Player Component -->
+                <div class="bg-slate-800 border border-slate-700 rounded-2xl shadow-2xl overflow-hidden flex flex-col">
+                    <!-- Slide Screen Canvas/Visual -->
+                    <div id="lesson-screen" class="p-8 min-h-[320px] bg-slate-950 flex flex-col justify-center items-center text-center relative border-b border-slate-800">
+                        <div id="lesson-slide-content" class="space-y-4 max-w-xl">
+                            <!-- Injected slide content -->
+                        </div>
+                    </div>
+
+                    <!-- Slide Controls -->
+                    <div class="bg-slate-900 p-4 flex flex-col sm:flex-row items-center justify-between gap-4">
+                        <div class="flex items-center gap-3">
+                            <button onclick="prevLessonSlide()" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg text-xs font-semibold">
+                                <i class="fa-solid fa-chevron-left mr-1"></i> Prev
+                            </button>
+                            <span id="slide-indicator" class="text-xs font-mono text-indigo-400">Slide 1 / 6</span>
+                            <button onclick="nextLessonSlide()" class="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-xs font-semibold">
+                                Next <i class="fa-solid fa-chevron-right ml-1"></i>
+                            </button>
+                        </div>
+
+                        <div class="flex items-center gap-2">
+                            <button onclick="playLessonAudio()" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-indigo-300 rounded-lg text-xs font-semibold border border-slate-700 flex items-center gap-1.5">
+                                <i class="fa-solid fa-volume-high"></i> Narrate Slide
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Syllabus Index -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div onclick="jumpToSlide(0)" class="p-4 bg-slate-800 border border-slate-700 rounded-xl cursor-pointer hover:border-indigo-500 transition">
+                        <span class="text-[10px] font-bold uppercase tracking-wider text-indigo-400">Module 1</span>
+                        <h4 class="text-sm font-bold text-white mt-1">What is a BST?</h4>
+                        <p class="text-xs text-slate-400 mt-1">Left &lt; Root &lt; Right invariant rule.</p>
+                    </div>
+                    <div onclick="jumpToSlide(1)" class="p-4 bg-slate-800 border border-slate-700 rounded-xl cursor-pointer hover:border-indigo-500 transition">
+                        <span class="text-[10px] font-bold uppercase tracking-wider text-indigo-400">Module 2</span>
+                        <h4 class="text-sm font-bold text-white mt-1">Insertion & Searching</h4>
+                        <p class="text-xs text-slate-400 mt-1">Binary comparisons reducing search space.</p>
+                    </div>
+                    <div onclick="jumpToSlide(2)" class="p-4 bg-slate-800 border border-slate-700 rounded-xl cursor-pointer hover:border-indigo-500 transition">
+                        <span class="text-[10px] font-bold uppercase tracking-wider text-indigo-400">Module 3</span>
+                        <h4 class="text-sm font-bold text-white mt-1">The 3 Deletion Cases</h4>
+                        <p class="text-xs text-slate-400 mt-1">Leaves, single child, and inorder successors.</p>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- VIEW 3: COMPLEXITY & BALANCE COMPARISON PANEL -->
+        <div id="view-complexity" class="view-panel hidden flex-1 p-6 overflow-y-auto bg-slate-900">
+            <div class="max-w-5xl mx-auto space-y-8">
+                
+                <div class="border-b border-slate-800 pb-4">
+                    <h2 class="text-2xl font-bold text-white flex items-center gap-2">
+                        <i class="fa-solid fa-chart-line text-indigo-500"></i>
+                        Tree Balance & Time Complexity Analysis
+                    </h2>
+                    <p class="text-sm text-slate-400 mt-1">
+                        Analyze why maintaining balanced height O(log n) prevents degradation into O(n) linear linked lists.
+                    </p>
+                </div>
+
+                <!-- Big Visual Comparison Grid -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- Balanced BST Card -->
+                    <div class="bg-slate-800 border border-emerald-500/30 rounded-2xl p-5 space-y-4">
+                        <div class="flex items-center justify-between">
+                            <h3 class="text-base font-bold text-emerald-400 flex items-center gap-2">
+                                <i class="fa-solid fa-network-wired"></i> Balanced BST
+                            </h3>
+                            <span class="px-2.5 py-0.5 rounded-full text-xs font-mono font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                                Height: O(log n)
+                            </span>
+                        </div>
+                        <p class="text-xs text-slate-300 leading-relaxed">
+                            Splits search space in half at every step. Ideal logarithmic search efficiency.
+                        </p>
+                        <!-- Diagram -->
+                        <div class="bg-slate-950 p-4 rounded-xl font-mono text-center text-xs text-indigo-300 border border-slate-800">
+<pre class="leading-snug">
+        (50)
+       /    \
+     (30)   (70)
+    /   \   /   \
+  (20) (40)(60) (80)
+</pre>
+                        </div>
+                        <div class="text-xs text-slate-400 space-y-1">
+                            <div><strong class="text-slate-200">Search Time:</strong> O(log n)</div>
+                            <div><strong class="text-slate-200">Max Comparisons (N=7):</strong> 3 steps</div>
+                        </div>
+                    </div>
+
+                    <!-- Skewed BST Card -->
+                    <div class="bg-slate-800 border border-rose-500/30 rounded-2xl p-5 space-y-4">
+                        <div class="flex items-center justify-between">
+                            <h3 class="text-base font-bold text-rose-400 flex items-center gap-2">
+                                <i class="fa-solid fa-link"></i> Skewed BST (Worst Case)
+                            </h3>
+                            <span class="px-2.5 py-0.5 rounded-full text-xs font-mono font-bold bg-rose-500/20 text-rose-300 border border-rose-500/30">
+                                Height: O(n)
+                            </span>
+                        </div>
+                        <p class="text-xs text-slate-300 leading-relaxed">
+                            Occurs when inserting sorted keys (e.g. 10, 20, 30, 40, 50). Degenerates into a Linked List.
+                        </p>
+                        <!-- Diagram -->
+                        <div class="bg-slate-950 p-4 rounded-xl font-mono text-center text-xs text-rose-300 border border-slate-800">
+<pre class="leading-snug">
+(10)
+   \
+   (20)
+      \
+      (30)
+         \
+         (40)
+            \
+            (50)
+</pre>
+                        </div>
+                        <div class="text-xs text-slate-400 space-y-1">
+                            <div><strong class="text-slate-200">Search Time:</strong> O(n)</div>
+                            <div><strong class="text-slate-200">Max Comparisons (N=5):</strong> 5 steps</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Complexity Summary Table -->
+                <div class="bg-slate-800 border border-slate-700 rounded-2xl overflow-hidden shadow-xl">
+                    <div class="p-4 bg-slate-800/90 border-b border-slate-700">
+                        <h3 class="text-sm font-bold text-white">Asymptotic Time Complexity Matrix</h3>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse text-xs">
+                            <thead>
+                                <tr class="bg-slate-900/60 text-slate-400 border-b border-slate-700">
+                                    <th class="p-3 font-semibold">Operation</th>
+                                    <th class="p-3 font-semibold">Average Case (Balanced)</th>
+                                    <th class="p-3 font-semibold">Worst Case (Skewed)</th>
+                                    <th class="p-3 font-semibold">Space Complexity</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-700/60 text-slate-300 font-mono">
+                                <tr class="hover:bg-slate-700/30">
+                                    <td class="p-3 font-sans font-bold text-white">Search</td>
+                                    <td class="p-3 text-emerald-400">O(log n)</td>
+                                    <td class="p-3 text-rose-400">O(n)</td>
+                                    <td class="p-3">O(h) recursive stack</td>
+                                </tr>
+                                <tr class="hover:bg-slate-700/30">
+                                    <td class="p-3 font-sans font-bold text-white">Insertion</td>
+                                    <td class="p-3 text-emerald-400">O(log n)</td>
+                                    <td class="p-3 text-rose-400">O(n)</td>
+                                    <td class="p-3">O(h)</td>
+                                </tr>
+                                <tr class="hover:bg-slate-700/30">
+                                    <td class="p-3 font-sans font-bold text-white">Deletion</td>
+                                    <td class="p-3 text-emerald-400">O(log n)</td>
+                                    <td class="p-3 text-rose-400">O(n)</td>
+                                    <td class="p-3">O(h)</td>
+                                </tr>
+                                <tr class="hover:bg-slate-700/30">
+                                    <td class="p-3 font-sans font-bold text-white">Traversals</td>
+                                    <td class="p-3 text-indigo-400">O(n)</td>
+                                    <td class="p-3 text-indigo-400">O(n)</td>
+                                    <td class="p-3">O(h)</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- VIEW 4: STUDENT PRACTICE QUIZ -->
+        <div id="view-quiz" class="view-panel hidden flex-1 p-6 overflow-y-auto bg-slate-900">
+            <div class="max-w-3xl mx-auto space-y-6">
+                
+                <div class="flex items-center justify-between border-b border-slate-800 pb-4">
+                    <div>
+                        <h2 class="text-2xl font-bold text-white flex items-center gap-2">
+                            <i class="fa-solid fa-list-check text-indigo-500"></i>
+                            BST Student Practice Laboratory
+                        </h2>
+                        <p class="text-sm text-slate-400 mt-1">
+                            Test your knowledge on BST invariants, node comparisons, and traversals.
+                        </p>
+                    </div>
+                    <div class="bg-slate-800 px-4 py-2 rounded-xl border border-slate-700 text-right">
+                        <div class="text-xs text-slate-400">Current Score</div>
+                        <div id="quiz-score" class="text-xl font-bold text-emerald-400">0 / 0</div>
+                    </div>
+                </div>
+
+                <!-- Dynamic Question Card -->
+                <div class="bg-slate-800 border border-slate-700 rounded-2xl p-6 space-y-6 shadow-xl">
+                    <div class="flex items-center justify-between">
+                        <span id="quiz-q-num" class="text-xs font-bold uppercase tracking-wider text-indigo-400">Question 1</span>
+                        <span id="quiz-attempts" class="text-xs font-mono text-slate-400">Attempts: 0</span>
+                    </div>
+
+                    <h3 id="quiz-q-text" class="text-base font-semibold text-white leading-snug">
+                        Loading practice question...
+                    </h3>
+
+                    <!-- Quiz Options List -->
+                    <div id="quiz-options-container" class="space-y-3">
+                        <!-- Options injected dynamically -->
+                    </div>
+
+                    <!-- Feedback Box -->
+                    <div id="quiz-feedback" class="hidden p-4 rounded-xl text-xs font-medium border leading-relaxed">
+                        <!-- Dynamic Feedback -->
+                    </div>
+
+                    <div class="flex justify-end gap-3 pt-2">
+                        <button id="next-q-btn" onclick="nextQuizQuestion()" class="px-5 py-2 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs rounded-xl shadow transition hidden">
+                            Next Question <i class="fa-solid fa-arrow-right ml-1"></i>
+                        </button>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+    </main>
+
+    <script>
+        // ==========================================
+        // BST NODE & DATA STRUCTURE LOGIC
+        // ==========================================
+        class BSTNode {
+            constructor(val) {
+                this.val = val;
+                this.left = null;
+                this.right = null;
+                // Rendering coordinates
+                this.x = 0;
+                this.y = 0;
+                this.targetX = 0;
+                this.targetY = 0;
+                // Highlight state: 'idle', 'comparing', 'found', 'successor', 'inserted', 'deleted'
+                this.state = 'idle';
+                this.id = Math.random().toString(36).substr(2, 9);
+            }
+        }
+
+        class BinarySearchTree {
+            constructor() {
+                this.root = null;
+            }
+
+            insert(val) {
+                const newNode = new BSTNode(val);
+                if (!this.root) {
+                    this.root = newNode;
+                    return;
+                }
+                let curr = this.root;
+                while (true) {
+                    if (val < curr.val) {
+                        if (!curr.left) {
+                            curr.left = newNode;
+                            break;
+                        }
+                        curr = curr.left;
+                    } else if (val > curr.val) {
+                        if (!curr.right) {
+                            curr.right = newNode;
+                            break;
+                        }
+                        curr = curr.right;
+                    } else {
+                        // Ignore duplicate values
+                        break;
+                    }
+                }
+            }
+        }
+
+        // Global Simulation State
+        let bst = new BinarySearchTree();
+        let animationSteps = [];
+        let currentStepIdx = -1;
+        let isPlaying = false;
+        let animationTimer = null;
+        let animSpeed = 1.0;
+        let audioMuted = false;
+        let isTeacherMode = false;
+
+        // Canvas Setup
+        const canvas = document.getElementById('bst-canvas');
+        const ctx = canvas.getContext('2d');
+
+        function resizeCanvas() {
+            const container = canvas.parentElement;
+            canvas.width = container.clientWidth;
+            canvas.height = container.clientHeight;
+            updateNodePositions();
+            drawTree();
+        }
+        window.addEventListener('resize', resizeCanvas);
+
+        // Preload Initial Tree [50, 30, 70, 20, 40, 60, 80]
+        function loadDefaultTree() {
+            bst = new BinarySearchTree();
+            const defaults = [50, 30, 70, 20, 40, 60, 80];
+            defaults.forEach(v => bst.insert(v));
+            clearStepLog();
+            updateNodePositions(true);
+            drawTree();
+            speak("Default BST loaded with root 50.");
+            updateStatusBadge('Ready', 'Default Tree Loaded', 'Explore insertion, search, deletion, and traversals.');
+        }
+
+        function generateRandomTree() {
+            const count = parseInt(document.getElementById('random-node-count').value);
+            bst = new BinarySearchTree();
+            const used = new Set();
+            while (used.size < count) {
+                const randVal = Math.floor(Math.random() * 90) + 10;
+                used.add(randVal);
+            }
+            used.forEach(v => bst.insert(v));
+            clearStepLog();
+            updateNodePositions(true);
+            drawTree();
+            speak(`Generated random Binary Search Tree with ${count} nodes.`);
+            updateStatusBadge('Ready', 'Random Tree Generated', `Tree constructed with ${count} random integer nodes.`);
+        }
+
+        // Calculate (X, Y) Coordinates recursively for each node
+        function updateNodePositions(snap = false) {
+            if (!bst.root) return;
+            const startY = 60;
+            const levelHeight = 70;
+
+            function calculate(node, depth, minX, maxX) {
+                if (!node) return;
+                const midX = (minX + maxX) / 2;
+                node.targetX = midX;
+                node.targetY = startY + depth * levelHeight;
+
+                if (snap) {
+                    node.x = node.targetX;
+                    node.y = node.targetY;
+                }
+
+                calculate(node.left, depth + 1, minX, midX);
+                calculate(node.right, depth + 1, midX, maxX);
+            }
+
+            calculate(bst.root, 0, 20, canvas.width - 20);
+        }
+
+        // Canvas Animation Loop
+        function drawTree() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            if (!bst.root) {
+                ctx.fillStyle = '#64748b';
+                ctx.font = '14px Inter';
+                ctx.textAlign = 'center';
+                ctx.fillText('BST is empty. Insert a value to start.', canvas.width / 2, canvas.height / 2);
+                return;
+            }
+
+            // Smoothly lerp node positions
+            let needAnimate = false;
+            function updatePositions(node) {
+                if (!node) return;
+                const dx = node.targetX - node.x;
+                const dy = node.targetY - node.y;
+                if (Math.abs(dx) > 0.5 || Math.abs(dy) > 0.5) {
+                    node.x += dx * 0.15;
+                    node.y += dy * 0.15;
+                    needAnimate = true;
+                } else {
+                    node.x = node.targetX;
+                    node.y = node.targetY;
+                }
+                updatePositions(node.left);
+                updatePositions(node.right);
+            }
+            updatePositions(bst.root);
+
+            // Draw Edges first
+            function drawEdges(node) {
+                if (!node) return;
+                ctx.lineWidth = 2.5;
+
+                if (node.left) {
+                    ctx.strokeStyle = '#475569';
+                    ctx.beginPath();
+                    ctx.moveTo(node.x, node.y);
+                    ctx.lineTo(node.left.x, node.left.y);
+                    ctx.stroke();
+                    drawEdges(node.left);
+                }
+
+                if (node.right) {
+                    ctx.strokeStyle = '#475569';
+                    ctx.beginPath();
+                    ctx.moveTo(node.x, node.y);
+                    ctx.lineTo(node.right.x, node.right.y);
+                    ctx.stroke();
+                    drawEdges(node.right);
+                }
+            }
+            drawEdges(bst.root);
+
+            // Draw Nodes
+            function drawNodes(node) {
+                if (!node) return;
+
+                const radius = 22;
+                ctx.beginPath();
+                ctx.arc(node.x, node.y, radius, 0, Math.PI * 2);
+
+                // State Colors
+                let bgColor = '#4f46e5'; // default indigo
+                let borderColor = '#818cf8';
+                let textColor = '#ffffff';
+
+                if (node.state === 'comparing') {
+                    bgColor = '#f59e0b'; // amber
+                    borderColor = '#fcd34d';
+                } else if (node.state === 'found' || node.state === 'inserted') {
+                    bgColor = '#10b981'; // emerald
+                    borderColor = '#6ee7b7';
+                } else if (node.state === 'successor' || node.state === 'deleted') {
+                    bgColor = '#f43f5e'; // rose
+                    borderColor = '#fda4af';
+                }
+
+                ctx.fillStyle = bgColor;
+                ctx.fill();
+                ctx.lineWidth = 3;
+                ctx.strokeStyle = borderColor;
+                ctx.stroke();
+
+                // Draw Value Label
+                ctx.fillStyle = textColor;
+                ctx.font = 'bold 13px Fira Code';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(node.val, node.x, node.y);
+
+                // Root indicator badge
+                if (node === bst.root) {
+                    ctx.fillStyle = '#a5b4fc';
+                    ctx.font = '10px Inter';
+                    ctx.fillText('ROOT', node.x, node.y - radius - 8);
+                }
+
+                drawNodes(node.left);
+                drawNodes(node.right);
+            }
+            drawNodes(bst.root);
+
+            if (needAnimate) {
+                requestAnimationFrame(drawTree);
+            }
+        }
+
+        // Speech Synthesis Narrator
+        function speak(text) {
+            if (audioMuted || !('speechSynthesis' in window)) return;
+            window.speechSynthesis.cancel(); // Stop active queue
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.rate = animSpeed;
+            window.speechSynthesis.speak(utterance);
+        }
+
+        function toggleAudioMute() {
+            audioMuted = !audioMuted;
+            const icon = document.getElementById('audio-icon');
+            if (audioMuted) {
+                icon.className = 'fa-solid fa-volume-xmark text-slate-500';
+                window.speechSynthesis.cancel();
+            } else {
+                icon.className = 'fa-solid fa-volume-high text-indigo-400';
+                speak("Audio narration enabled.");
+            }
+        }
+
+        // Reset node highlights
+        function resetNodeStates(node = bst.root) {
+            if (!node) return;
+            node.state = 'idle';
+            resetNodeStates(node.left);
+            resetNodeStates(node.right);
+        }
+
+        // Operational Pipeline Handler
+        function runAnimationPipeline(steps) {
+            animationSteps = steps;
+            currentStepIdx = -1;
+            pauseAnimation();
+            stepNext();
+            playAnimation();
+        }
+
+        function executeStep(step) {
+            resetNodeStates();
+            if (step.activeNode) {
+                step.activeNode.state = step.state || 'comparing';
+            }
+            if (step.secondaryNode) {
+                step.secondaryNode.state = step.secondaryState || 'successor';
+            }
+
+            // Update UI Console & Narration
+            document.getElementById('step-log-text').innerText = step.log;
+            document.getElementById('step-counter').innerText = `Step ${currentStepIdx + 1} / ${animationSteps.length}`;
+            speak(step.narration || step.log);
+
+            if (step.action) {
+                step.action();
+            }
+
+            if (step.traversalList) {
+                renderTraversalList(step.traversalList, step.visitedVal);
+            }
+
+            updateNodePositions();
+            drawTree();
+        }
+
+        function stepNext() {
+            if (currentStepIdx < animationSteps.length - 1) {
+                currentStepIdx++;
+                executeStep(animationSteps[currentStepIdx]);
+            } else {
+                pauseAnimation();
+                updateStatusBadge('Completed', 'Operation Finished', 'Select another action.');
+            }
+        }
+
+        function stepPrev() {
+            if (currentStepIdx > 0) {
+                currentStepIdx--;
+                executeStep(animationSteps[currentStepIdx]);
+            }
+        }
+
+        function togglePlayPause() {
+            if (isPlaying) {
+                pauseAnimation();
+            } else {
+                playAnimation();
+            }
+        }
+
+        function playAnimation() {
+            if (currentStepIdx >= animationSteps.length - 1) {
+                currentStepIdx = -1;
+            }
+            isPlaying = true;
+            document.getElementById('play-pause-icon').className = 'fa-solid fa-pause';
+            clearInterval(animationTimer);
+            animationTimer = setInterval(() => {
+                if (currentStepIdx < animationSteps.length - 1) {
+                    stepNext();
+                } else {
+                    pauseAnimation();
+                }
+            }, 1800 / animSpeed);
+        }
+
+        function pauseAnimation() {
+            isPlaying = false;
+            document.getElementById('play-pause-icon').className = 'fa-solid fa-play';
+            clearInterval(animationTimer);
+        }
+
+        function updateSpeed(val) {
+            animSpeed = parseFloat(val);
+            document.getElementById('speed-disp').innerText = animSpeed.toFixed(1) + 'x';
+            if (isPlaying) {
+                playAnimation();
+            }
+        }
+
+        // ==========================================
+        // ALGORITHMIC STEP GENERATORS
+        // ==========================================
+
+        // 1. INSERT OPERATION
+        function handleInsert() {
+            const input = document.getElementById('insert-val');
+            const val = parseInt(input.value);
+            if (isNaN(val)) return;
+            input.value = '';
+
+            updateStatusBadge('Inserting', `Insert ${val}`, `Navigating BST to place key ${val}`);
+            const steps = [];
+
+            if (!bst.root) {
+                steps.push({
+                    log: `Tree is empty. Creating root node with value ${val}.`,
+                    narration: `Tree is empty. Creating root node with value ${val}.`,
+                    action: () => { bst.insert(val); }
+                });
+                runAnimationPipeline(steps);
+                return;
+            }
+
+            let curr = bst.root;
+            steps.push({
+                activeNode: curr,
+                state: 'comparing',
+                log: `Start search at Root (${curr.val}) to insert ${val}.`,
+                narration: `Starting at the root, value ${curr.val}. We want to insert ${val}.`
+            });
+
+            while (curr) {
+                if (val < curr.val) {
+                    if (curr.left) {
+                        steps.push({
+                            activeNode: curr,
+                            state: 'comparing',
+                            log: `${val} < ${curr.val} → Move LEFT to child (${curr.left.val}).`,
+                            narration: `Since ${val} is smaller than ${curr.val}, move to the left subtree.`
+                        });
+                        curr = curr.left;
+                    } else {
+                        steps.push({
+                            activeNode: curr,
+                            state: 'comparing',
+                            log: `${val} < ${curr.val} → Left child is NULL. Insert key ${val} here!`,
+                            narration: `Since ${val} is smaller than ${curr.val} and left position is empty, insert ${val} as left child.`
+                        });
+                        steps.push({
+                            log: `Node ${val} attached to tree.`,
+                            narration: `Node ${val} has been successfully inserted.`,
+                            action: () => { bst.insert(val); }
+                        });
+                        break;
+                    }
+                } else if (val > curr.val) {
+                    if (curr.right) {
+                        steps.push({
+                            activeNode: curr,
+                            state: 'comparing',
+                            log: `${val} > ${curr.val} → Move RIGHT to child (${curr.right.val}).`,
+                            narration: `Since ${val} is greater than ${curr.val}, move to the right subtree.`
+                        });
+                        curr = curr.right;
+                    } else {
+                        steps.push({
+                            activeNode: curr,
+                            state: 'comparing',
+                            log: `${val} > ${curr.val} → Right child is NULL. Insert key ${val} here!`,
+                            narration: `Since ${val} is greater than ${curr.val} and right position is empty, insert ${val} as right child.`
+                        });
+                        steps.push({
+                            log: `Node ${val} attached to tree.`,
+                            narration: `Node ${val} has been successfully inserted.`,
+                            action: () => { bst.insert(val); }
+                        });
+                        break;
+                    }
+                } else {
+                    steps.push({
+                        activeNode: curr,
+                        state: 'found',
+                        log: `Value ${val} already exists in the BST. Duplicate ignored.`,
+                        narration: `Value ${val} already exists in the binary search tree. Duplicate keys are ignored.`
+                    });
+                    break;
+                }
+            }
+
+            runAnimationPipeline(steps);
+        }
+
+        // 2. SEARCH OPERATION
+        function handleSearch() {
+            const input = document.getElementById('search-val');
+            const val = parseInt(input.value);
+            if (isNaN(val)) return;
+            input.value = '';
+
+            updateStatusBadge('Searching', `Search ${val}`, `Searching path for value ${val}`);
+            const steps = [];
+
+            if (!bst.root) {
+                steps.push({ log: 'Tree is empty. Value not found.', narration: 'The tree is empty.' });
+                runAnimationPipeline(steps);
+                return;
+            }
+
+            let curr = bst.root;
+            while (curr) {
+                if (val === curr.val) {
+                    steps.push({
+                        activeNode: curr,
+                        state: 'found',
+                        log: `Compare ${val} with ${curr.val} → Match found! Key ${val} exists in tree.`,
+                        narration: `Compare ${val} with ${curr.val}. Key found!`
+                    });
+                    break;
+                } else if (val < curr.val) {
+                    steps.push({
+                        activeNode: curr,
+                        state: 'comparing',
+                        log: `Compare ${val} with ${curr.val} → ${val} < ${curr.val} → Move LEFT`,
+                        narration: `Compare ${val} with ${curr.val}. ${val} is smaller, move left.`
+                    });
+                    curr = curr.left;
+                } else {
+                    steps.push({
+                        activeNode: curr,
+                        state: 'comparing',
+                        log: `Compare ${val} with ${curr.val} → ${val} > ${curr.val} → Move RIGHT`,
+                        narration: `Compare ${val} with ${curr.val}. ${val} is larger, move right.`
+                    });
+                    curr = curr.right;
+                }
+            }
+
+            if (!curr) {
+                steps.push({
+                    log: `Reached NULL pointer. Value ${val} does not exist in tree.`,
+                    narration: `Reached null child. Key ${val} was not found in the binary search tree.`
+                });
+            }
+
+            runAnimationPipeline(steps);
+        }
+
+        // 3. DELETE OPERATION (3 CASES)
+        function handleDelete() {
+            const input = document.getElementById('delete-val');
+            const val = parseInt(input.value);
+            if (isNaN(val)) return;
+            input.value = '';
+
+            updateStatusBadge('Deleting', `Delete ${val}`, `Executing 3-case deletion for key ${val}`);
+            const steps = [];
+
+            // Helper to recursively collect deletion steps and execute structural modification
+            function deleteNodeHelper(root, key) {
+                if (!root) {
+                    steps.push({ log: `Key ${key} not found for deletion.`, narration: `Key ${key} was not found.` });
+                    return null;
+                }
+
+                if (key < root.val) {
+                    steps.push({ activeNode: root, state: 'comparing', log: `${key} < ${root.val} → Move LEFT`, narration: `Move left to find key ${key}.` });
+                    root.left = deleteNodeHelper(root.left, key);
+                } else if (key > root.val) {
+                    steps.push({ activeNode: root, state: 'comparing', log: `${key} > ${root.val} → Move RIGHT`, narration: `Move right to find key ${key}.` });
+                    root.right = deleteNodeHelper(root.right, key);
+                } else {
+                    // Target Node Found
+                    steps.push({
+                        activeNode: root,
+                        state: 'deleted',
+                        log: `Found node ${root.val} to delete. Evaluating deletion case...`,
+                        narration: `Found node ${root.val}. Evaluating children.`
+                    });
+
+                    // Case 1: Leaf
+                    if (!root.left && !root.right) {
+                        steps.push({
+                            activeNode: root,
+                            state: 'deleted',
+                            log: `Case 1: Leaf Node (0 children). Simply remove node ${root.val}.`,
+                            narration: `Node ${root.val} is a leaf node with no children. Removing directly.`
+                        });
+                        return null;
+                    }
+                    // Case 2: One child (Right only)
+                    if (!root.left) {
+                        steps.push({
+                            activeNode: root,
+                            state: 'deleted',
+                            log: `Case 2: Single Right Child (${root.right.val}). Link parent directly to right child.`,
+                            narration: `Node ${root.val} has one right child. Bypassing node with its child.`
+                        });
+                        return root.right;
+                    }
+                    // Case 2: One child (Left only)
+                    if (!root.right) {
+                        steps.push({
+                            activeNode: root,
+                            state: 'deleted',
+                            log: `Case 2: Single Left Child (${root.left.val}). Link parent directly to left child.`,
+                            narration: `Node ${root.val} has one left child. Bypassing node with its child.`
+                        });
+                        return root.left;
+                    }
+
+                    // Case 3: Two Children
+                    steps.push({
+                        activeNode: root,
+                        state: 'deleted',
+                        log: `Case 3: Two Children. Finding Inorder Successor (min node in right subtree)...`,
+                        narration: `Node ${root.val} has two children. Locating its inorder successor.`
+                    });
+
+                    let succParent = root;
+                    let succ = root.right;
+                    while (succ.left) {
+                        succParent = succ;
+                        succ = succ.left;
+                    }
+
+                    steps.push({
+                        activeNode: root,
+                        secondaryNode: succ,
+                        state: 'deleted',
+                        secondaryState: 'successor',
+                        log: `Inorder Successor is ${succ.val}. Replace key ${root.val} with ${succ.val}.`,
+                        narration: `Inorder successor found: ${succ.val}. Copy value to target node and delete original successor.`
+                    });
+
+                    root.val = succ.val;
+                    root.right = deleteNodeHelper(root.right, succ.val);
+                }
+                return root;
+            }
+
+            steps.push({ log: `Starting deletion workflow for key ${val}.`, narration: `Starting deletion procedure for key ${val}.` });
+            bst.root = deleteNodeHelper(bst.root, val);
+
+            runAnimationPipeline(steps);
+        }
+
+        // 4. TRAVERSALS
+        function startTraversal(type) {
+            updateStatusBadge('Traversing', `${type.toUpperCase()} Traversal`, `Executing ${type} traversal sequence.`);
+            const steps = [];
+            const visitedOrder = [];
+
+            function inorder(node) {
+                if (!node) return;
+                inorder(node.left);
+                visitedOrder.push(node.val);
+                steps.push({
+                    activeNode: node,
+                    state: 'found',
+                    traversalList: [...visitedOrder],
+                    visitedVal: node.val,
+                    log: `Visit node ${node.val} (Left Subtree completed).`,
+                    narration: `Visiting node ${node.val}.`
+                });
+                inorder(node.right);
+            }
+
+            function preorder(node) {
+                if (!node) return;
+                visitedOrder.push(node.val);
+                steps.push({
+                    activeNode: node,
+                    state: 'found',
+                    traversalList: [...visitedOrder],
+                    visitedVal: node.val,
+                    log: `Visit root/parent node ${node.val} first.`,
+                    narration: `Visiting root ${node.val}.`
+                });
+                preorder(node.left);
+                preorder(node.right);
+            }
+
+            function postorder(node) {
+                if (!node) return;
+                postorder(node.left);
+                postorder(node.right);
+                visitedOrder.push(node.val);
+                steps.push({
+                    activeNode: node,
+                    state: 'found',
+                    traversalList: [...visitedOrder],
+                    visitedVal: node.val,
+                    log: `Visit node ${node.val} after left and right subtrees.`,
+                    narration: `Visiting node ${node.val}.`
+                });
+            }
+
+            function levelorder(node) {
+                if (!node) return;
+                const queue = [node];
+                while (queue.length > 0) {
+                    const curr = queue.shift();
+                    visitedOrder.push(curr.val);
+                    steps.push({
+                        activeNode: curr,
+                        state: 'found',
+                        traversalList: [...visitedOrder],
+                        visitedVal: curr.val,
+                        log: `Level-Order visit node ${curr.val}.`,
+                        narration: `Visiting node ${curr.val}.`
+                    });
+                    if (curr.left) queue.push(curr.left);
+                    if (curr.right) queue.push(curr.right);
+                }
+            }
+
+            if (type === 'inorder') inorder(bst.root);
+            else if (type === 'preorder') preorder(bst.root);
+            else if (type === 'postorder') postorder(bst.root);
+            else if (type === 'levelorder') levelorder(bst.root);
+
+            if (type === 'inorder') {
+                steps.push({
+                    log: `Inorder traversal complete! Note that Inorder output on a BST always yields strictly sorted ascending order.`,
+                    narration: `Inorder traversal complete. Notice that the values are now in sorted order.`
+                });
+            }
+
+            runAnimationPipeline(steps);
+        }
+
+        function renderTraversalList(list, currentVal) {
+            const container = document.getElementById('traversal-output');
+            container.innerHTML = '';
+            list.forEach((val, idx) => {
+                const badge = document.createElement('span');
+                badge.className = `px-2.5 py-1 rounded-lg font-mono text-xs font-bold transition-all shadow ${
+                    val === currentVal ? 'bg-emerald-500 text-slate-950 scale-110' : 'bg-slate-800 border border-slate-700 text-indigo-300'
+                }`;
+                badge.innerText = val;
+                container.appendChild(badge);
+
+                if (idx < list.length - 1) {
+                    const arrow = document.createElement('span');
+                    arrow.className = 'text-slate-600 text-xs';
+                    arrow.innerText = '→';
+                    container.appendChild(arrow);
+                }
+            });
+        }
+
+        // UI Helpers
+        function clearStepLog() {
+            document.getElementById('traversal-output').innerHTML = '<span class="text-slate-500 italic">No traversal currently active</span>';
+            document.getElementById('step-log-text').innerText = 'Ready to begin. Select an operation.';
+            document.getElementById('step-counter').innerText = 'Step 0 / 0';
+        }
+
+        function updateStatusBadge(badgeText, title, detail) {
+            document.getElementById('status-badge').innerText = badgeText;
+            document.getElementById('operation-title').innerText = title;
+            document.getElementById('operation-detail').innerText = detail;
+        }
+
+        function switchTab(tabId) {
+            document.querySelectorAll('.view-panel').forEach(el => el.classList.add('hidden'));
+            document.getElementById(`view-${tabId}`).classList.remove('hidden');
+
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.className = 'tab-btn px-4 py-1.5 rounded-lg text-xs font-medium text-slate-400 hover:text-slate-200 transition-all';
+            });
+            const activeBtn = document.getElementById(`tab-${tabId}`);
+            if (activeBtn) {
+                activeBtn.className = 'tab-btn px-4 py-1.5 rounded-lg text-xs font-medium text-white bg-indigo-600 shadow';
+            }
+
+            if (tabId === 'lab') {
+                resizeCanvas();
+            } else if (tabId === 'lesson') {
+                renderLessonSlide();
+            } else if (tabId === 'quiz') {
+                loadQuizQuestion();
+            }
+        }
+
+        function toggleTeacherMode() {
+            isTeacherMode = !isTeacherMode;
+            const btn = document.getElementById('teacher-mode-btn');
+            if (isTeacherMode) {
+                btn.className = 'px-3 py-1.5 text-xs font-semibold rounded-lg bg-emerald-500 text-slate-950 shadow transition flex items-center gap-1.5';
+                speak("Teacher presentation mode active.");
+            } else {
+                btn.className = 'px-3 py-1.5 text-xs font-semibold rounded-lg bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-300 border border-emerald-500/30 transition flex items-center gap-1.5';
+            }
+        }
+
+        // ==========================================
+        // ANIMATED INSTRUCTIONAL LESSON SLIDES
+        // ==========================================
+        const slides = [
+            {
+                title: "1. What is a Binary Search Tree?",
+                body: "A Binary Search Tree (BST) is a root-based data structure where each node has at most two children. The core ordering invariant states: Left Subtree < Root < Right Subtree.",
+                icon: "fa-diagram-project"
+            },
+            {
+                title: "2. Insertion & Search Operations",
+                body: "To search or insert a key, compare target with current node. If target < node value, move LEFT. If target > node value, move RIGHT. On average, this eliminates half the tree at each step O(log n).",
+                icon: "fa-magnifying-glass"
+            },
+            {
+                title: "3. Deletion Cases",
+                body: "Deletion handles 3 cases: (1) Leaf nodes are removed directly. (2) Single-child nodes bypass the target. (3) Two-child nodes swap value with the Inorder Successor (min node in right subtree).",
+                icon: "fa-trash"
+            }
+        ];
+        let currentSlideIdx = 0;
+
+        function renderLessonSlide() {
+            const slide = slides[currentSlideIdx];
+            const container = document.getElementById('lesson-slide-content');
+            container.innerHTML = `
+                <div class="text-indigo-400 text-4xl mb-2"><i class="fa-solid ${slide.icon}"></i></div>
+                <h3 class="text-xl font-bold text-white">${slide.title}</h3>
+                <p class="text-sm text-slate-300 leading-relaxed">${slide.body}</p>
+            `;
+            document.getElementById('slide-indicator').innerText = `Slide ${currentSlideIdx + 1} / ${slides.length}`;
+        }
+
+        function prevLessonSlide() {
+            if (currentSlideIdx > 0) {
+                currentSlideIdx--;
+                renderLessonSlide();
+            }
+        }
+
+        function nextLessonSlide() {
+            if (currentSlideIdx < slides.length - 1) {
+                currentSlideIdx++;
+                renderLessonSlide();
+            }
+        }
+
+        function jumpToSlide(idx) {
+            currentSlideIdx = idx;
+            renderLessonSlide();
+        }
+
+        function playLessonAudio() {
+            speak(slides[currentSlideIdx].body);
+        }
+
+        // ==========================================
+        // PRACTICE QUIZ SYSTEM
+        // ==========================================
+        const quizQuestions = [
+            {
+                question: "If you insert 45 into a BST with root 50, where does it go?",
+                options: ["Left Subtree of 50", "Right Subtree of 50", "Replaces Root 50", "Cannot be inserted"],
+                answer: 0,
+                explanation: "Because 45 < 50, according to the BST ordering rule, it must be placed in the left subtree."
+            },
+            {
+                question: "Which traversal of a Binary Search Tree always outputs keys in strictly sorted ascending order?",
+                options: ["Preorder Traversal", "Inorder Traversal", "Postorder Traversal", "Level-Order Traversal"],
+                answer: 1,
+                explanation: "Inorder traversal visits Left Subtree → Root → Right Subtree, producing sorted values."
+            },
+            {
+                question: "When deleting a node with TWO children, which node typically replaces the deleted node's key?",
+                options: ["Root Node", "Inorder Successor (Minimum node in Right Subtree)", "Leftmost Leaf Node", "Maximum node in Left Subtree"],
+                answer: 1,
+                explanation: "The Inorder Successor (smallest key in the right subtree) maintains the BST property when swapped."
+            }
+        ];
+
+        let quizIdx = 0;
+        let quizScore = 0;
+        let attempts = 0;
+
+        function loadQuizQuestion() {
+            const q = quizQuestions[quizIdx];
+            document.getElementById('quiz-q-num').innerText = `Question ${quizIdx + 1} / ${quizQuestions.length}`;
+            document.getElementById('quiz-q-text').innerText = q.question;
+            document.getElementById('quiz-attempts').innerText = `Attempts: ${attempts}`;
+            document.getElementById('next-q-btn').classList.add('hidden');
+            document.getElementById('quiz-feedback').className = 'hidden';
+
+            const optsContainer = document.getElementById('quiz-options-container');
+            optsContainer.innerHTML = '';
+
+            q.options.forEach((opt, idx) => {
+                const btn = document.createElement('button');
+                btn.className = 'w-full p-3 bg-slate-900 hover:bg-slate-700/80 border border-slate-700 rounded-xl text-left text-xs text-slate-200 transition font-medium flex items-center justify-between';
+                btn.innerHTML = `<span>${opt}</span> <i class="fa-regular fa-circle text-slate-500"></i>`;
+                btn.onclick = () => checkQuizAnswer(idx, btn);
+                optsContainer.appendChild(btn);
+            });
+        }
+
+        function checkQuizAnswer(selectedIdx, btnElement) {
+            attempts++;
+            document.getElementById('quiz-attempts').innerText = `Attempts: ${attempts}`;
+            const q = quizQuestions[quizIdx];
+            const feedback = document.getElementById('quiz-feedback');
+            feedback.classList.remove('hidden');
+
+            if (selectedIdx === q.answer) {
+                quizScore++;
+                document.getElementById('quiz-score').innerText = `${quizScore} / ${quizQuestions.length}`;
+                feedback.className = 'p-4 rounded-xl text-xs font-medium bg-emerald-500/10 text-emerald-300 border border-emerald-500/30';
+                feedback.innerHTML = `<i class="fa-solid fa-circle-check mr-1"></i> <strong>Correct!</strong> ${q.explanation}`;
+                document.getElementById('next-q-btn').classList.remove('hidden');
+                speak("Correct answer!");
+            } else {
+                feedback.className = 'p-4 rounded-xl text-xs font-medium bg-rose-500/10 text-rose-300 border border-rose-500/30';
+                feedback.innerHTML = `<i class="fa-solid fa-circle-xmark mr-1"></i> <strong>Incorrect.</strong> Try again!`;
+                speak("Incorrect. Please try again.");
+            }
+        }
+
+        function nextQuizQuestion() {
+            quizIdx = (quizIdx + 1) % quizQuestions.length;
+            loadQuizQuestion();
+        }
+
+        // Initialization
+        window.onload = function() {
+            loadDefaultTree();
+            resizeCanvas();
+        };
+    </script>
+</body>
+</html>
